@@ -16,7 +16,7 @@ module.exports = {
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ['tsconfig.json', 'tsconfig.dev.json'],
+    project: ['tsconfig.json', 'tsconfig.dev.json', 'jest.config.js'],
     sourceType: 'module',
     tsconfigRootDir: __dirname,
   },
@@ -27,5 +27,15 @@ module.exports = {
   rules: {
     quotes: ['error', 'single'],
     'import/no-unresolved': 0,
+    'sort-imports': [
+      'error',
+      {
+        ignoreCase: true,
+        ignoreDeclarationSort: true,
+        ignoreMemberSort: false,
+        memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single'],
+        allowSeparatedGroups: false,
+      },
+    ],
   },
 };

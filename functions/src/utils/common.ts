@@ -10,4 +10,5 @@ export const rmExistsFileAsync = async (path: string) => {
     return false;
   }
 };
+
 export const filterNonNullable = <T>(value: T): value is NonNullable<T> => value != null;
