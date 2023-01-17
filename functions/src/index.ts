@@ -1,20 +1,13 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'os';
-import * as dotenv from 'dotenv';
 
 import * as functions from 'firebase-functions';
 
 import { Client } from '@line/bot-sdk';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 
-import { filterNonNullable, rmExistsFileAsync } from './utils/common';
-
-dotenv.config();
-const channelSecret = process.env.CHANNEL_SECRET;
-const channelAccessToken = process.env.CHANNEL_ACCESS_TOKEN;
-const privateKey = process.env.PRIVATE_KEY;
-const clientEmail = process.env.CLIENT_EMAIL;
+import { filterNonNullable, getEnv, rmExistsFileAsync } from './utils/common';
 
 export const greet = functions.https.onRequest((_, response) => {
   response.status(200).send('hello world');
@@ -23,7 +16,8 @@ export const greet = functions.https.onRequest((_, response) => {
 export const lineWebhook = functions.https.onRequest(async (request, response) => {
   functions.logger.info('lineWebhook', { structuredData: true });
 
-  if (!channelSecret || !channelAccessToken) {
+  const { channelSecret, channelAccessToken, privateKey, clientEmail } = getEnv();
+  if (!channelSecret || !channelAccessToken || !privateKey || !clientEmail) {
     response.status(500).send('Not set servece keys');
     return;
   }
@@ -38,8 +32,10 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
   // const messageText = event.message.text;
   const replyToken = event.replyToken;
 
-  if (messageType === 'image') {
+  if (messageType !== 'image') {
+    functions.logger.info('Not image type message');
     response.status(400).send('Not image type message');
+    return;
   }
 
   const lineClient = new Client({
