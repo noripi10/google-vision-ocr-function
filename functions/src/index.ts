@@ -7,7 +7,7 @@ import * as functions from 'firebase-functions';
 import { Client } from '@line/bot-sdk';
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 
-import { filterNonNullable, getEnv, rmExistsFileAsync } from './utils/common';
+import { getEnv, rmExistsFileAsync } from './utils/common';
 
 export const greet = functions.https.onRequest((_, response) => {
   response.status(200).send('hello world');
@@ -64,7 +64,9 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
   // const flatText = innerTextArray.reduce((t, c) => (t ?? '') + (c ?? '') + '\n', '');
   // functions.logger.info(flatText);
 
-  lineClient.replyMessage(replyToken, { type: 'text', text: `【解析結果】\n${result.fullTextAnnotation}` });
+  const fullText = result.fullTextAnnotation?.text ?? '';
+
+  lineClient.replyMessage(replyToken, { type: 'text', text: `【解析結果】\n${fullText}` });
   rmExistsFileAsync(downloadPath);
 
   response.status(200).send('OK');
