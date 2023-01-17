@@ -33,7 +33,7 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
   const replyToken = event.replyToken;
 
   if (messageType !== 'image') {
-    functions.logger.info('Not image type message');
+    functions.logger.warn('Not image type message');
     response.status(400).send('Not image type message');
     return;
   }
@@ -57,14 +57,14 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
   await fs.writeFile(downloadPath, stream);
 
   const [result] = await visionClient.documentTextDetection(downloadPath);
+  functions.logger.info(result);
 
-  const annotations = result.textAnnotations;
-  const innerTextArray = annotations?.map((e) => e.description).filter((e) => filterNonNullable(e)) ?? [''];
-  const flatText = innerTextArray.reduce((t, c) => (t ?? '') + (c ?? '') + '\n', '');
+  // const annotations = result.textAnnotations;
+  // const innerTextArray = annotations?.map((e) => e.description).filter((e) => filterNonNullable(e)) ?? [''];
+  // const flatText = innerTextArray.reduce((t, c) => (t ?? '') + (c ?? '') + '\n', '');
+  // functions.logger.info(flatText);
 
-  functions.logger.info(flatText);
-
-  lineClient.replyMessage(replyToken, { type: 'text', text: `Replay:\n${flatText}` });
+  lineClient.replyMessage(replyToken, { type: 'text', text: `【解析結果】\n${result.fullTextAnnotation}` });
   rmExistsFileAsync(downloadPath);
 
   response.status(200).send('OK');

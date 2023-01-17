@@ -29,11 +29,16 @@ describe('functions test', () => {
     test('eventタイプがimage以外は処理しない', async () => {
       try {
         await axios.post(
-          '',
+          'http://localhost:5001/vision-ocr-d46ac/us-central1/lineWebhook',
           {
-            envets: [
+            events: [
               {
-                type: 'text',
+                message: {
+                  id: 1,
+                  type: 'text',
+                  text: 'text',
+                  replyToken: 'token',
+                },
               },
             ],
           },
