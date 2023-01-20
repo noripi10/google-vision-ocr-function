@@ -25,6 +25,7 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
   }
 
   // 署名検証
+  // TODO test時はコメントにしないと通らない
   const body = request.body;
   const headers = request.headers;
   const signature = crypto.createHmac('SHA256', channelSecret).update(body).digest('base64');
@@ -69,9 +70,20 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
   await rmExistsFileAsync(downloadPath);
 
   const stream = await lineClient.getMessageContent(messageId);
-  await fs.writeFile(downloadPath, stream);
 
-  const [result] = await visionClient.documentTextDetection(downloadPath);
+  // File Save Mode
+  // await fs.writeFile(downloadPath, stream);
+  // const [result] = await visionClient.documentTextDetection(downloadPath);
+
+  // File Streaming Mode
+  const content = await new Promise<Buffer>((resolve, reject) => {
+    const buffers: Buffer[] = [];
+    stream.on('data', (chunk) => buffers.push(Buffer.from(chunk)));
+    stream.on('end', () => resolve(Buffer.concat(buffers)));
+    stream.on('error', () => reject(new Error('file streaming error')));
+  });
+  const [result] = await visionClient.documentTextDetection({ image: { content } });
+
   functions.logger.info(result);
 
   // const annotations = result.textAnnotations;
@@ -82,6 +94,7 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
   const fullText = result.fullTextAnnotation?.text ?? '';
 
   lineClient.replyMessage(replyToken, { type: 'text', text: `【解析結果】\n${fullText}` });
+
   rmExistsFileAsync(downloadPath);
 
   response.status(200).send('OK');
