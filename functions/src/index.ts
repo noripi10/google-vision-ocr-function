@@ -2,6 +2,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'os';
 
+import * as crypto from 'crypto';
+
 import * as functions from 'firebase-functions';
 
 import { Client } from '@line/bot-sdk';
@@ -22,8 +24,21 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
     return;
   }
 
+  // 署名検証
+  const body = request.body;
+  const headers = request.headers;
+  const signature = crypto.createHmac('SHA256', channelSecret).update(body).digest('base64');
+  if (headers['x-line-signature'] !== signature) {
+    throw new Error('No signature');
+  }
+
   // https://developers.line.biz/ja/reference/messaging-api/#webhook-event-objects
   const events = request.body.events;
+  if (!events) {
+    response.status(400).send('Not found events');
+    return;
+  }
+
   functions.logger.info(events);
 
   const event = events[0];
