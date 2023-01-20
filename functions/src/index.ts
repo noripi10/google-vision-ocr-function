@@ -24,11 +24,14 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
     return;
   }
 
-  // 署名検証
-  // TODO test時はコメントにしないと通らない
   const body = request.body;
   const headers = request.headers;
-  const signature = crypto.createHmac('SHA256', channelSecret).update(body).digest('base64');
+  functions.logger.info(body);
+
+  // 署名検証
+  // TODO test時はコメントにしないと通らない
+  const stringBody = JSON.stringify(body);
+  const signature = crypto.createHmac('SHA256', channelSecret).update(stringBody).digest('base64');
   if (headers['x-line-signature'] !== signature) {
     throw new Error('No signature');
   }
@@ -39,8 +42,6 @@ export const lineWebhook = functions.https.onRequest(async (request, response) =
     response.status(400).send('Not found events');
     return;
   }
-
-  functions.logger.info(events);
 
   const event = events[0];
   const messageId = event.message.id;
